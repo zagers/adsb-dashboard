@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ADS-B Dashboard</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header>
+  <h1>ADS-B Performance Dashboard</h1>
+  <span id="status" class="status-indicator">connecting</span>
+</header>
+<main class="grid">
+  <div class="card" id="card-mps">
+    <h2>Messages / sec</h2>
+    <div class="value" id="mps-value">--</div>
+    <div class="sub" id="mps-total">total: --</div>
+  </div>
+  <div class="card" id="card-ac">
+    <h2>Aircraft Tracked</h2>
+    <div class="value" id="ac-now">--</div>
+    <div class="sub" id="ac-max">peak: --</div>
+  </div>
+  <div class="card" id="card-signal">
+    <h2>Signal Quality</h2>
+    <div class="bar-container" id="signal-bar"></div>
+    <div class="sub" id="signal-labels">--</div>
+  </div>
+  <div class="card" id="card-sys">
+    <h2>System</h2>
+    <div class="value" id="sys-cpu">CPU: --</div>
+    <div class="sub" id="sys-mem">MEM: --</div>
+  </div>
+  <div class="card" id="card-uptime">
+    <h2>Health</h2>
+    <div class="value" id="health-status">--</div>
+    <div class="sub" id="health-age">--</div>
+  </div>
+  <div class="card wide" id="card-msg-history">
+    <h2>Messages Over Time</h2>
+    <canvas id="msg-sparkline" width="400" height="80"></canvas>
+  </div>
+  <div class="card wide" id="card-ac-history">
+    <h2>Aircraft Over Time</h2>
+    <canvas id="ac-sparkline" width="400" height="80"></canvas>
+  </div>
+</main>
+<script src="/script.js"></script>
+</body>
+</html>
