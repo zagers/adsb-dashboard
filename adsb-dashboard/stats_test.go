@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"os"
 	"testing"
 )
 
@@ -63,5 +64,50 @@ func TestStatsSignalRatio(t *testing.T) {
 	}
 	if s.ErrorRatio() != 0.1 {
 		t.Errorf("expected 0.1, got %f", s.ErrorRatio())
+	}
+}
+
+func TestReadStatsFile(t *testing.T) {
+	f, err := os.CreateTemp(t.TempDir(), "stats*.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+
+	sample := `{"latest":{"total":100},"aircraft":{"now":5,"max":10}}`
+	if _, err := f.Write([]byte(sample)); err != nil {
+		t.Fatal(err)
+	}
+	f.Close()
+
+	s, err := ReadStatsFile(f.Name())
+	if err != nil {
+		t.Fatalf("ReadStatsFile failed: %v", err)
+	}
+	if s.Latest.Total != 100 {
+		t.Errorf("expected 100, got %d", s.Latest.Total)
+	}
+	if s.Aircraft.Now != 5 {
+		t.Errorf("expected 5, got %d", s.Aircraft.Now)
+	}
+}
+
+func TestReadStatsFileNotFound(t *testing.T) {
+	_, err := ReadStatsFile("/nonexistent/stats.json")
+	if err == nil {
+		t.Fatal("expected error for missing file")
+	}
+}
+
+func TestReadSystemStats(t *testing.T) {
+	s, err := ReadSystemStats()
+	if err != nil {
+		t.Fatalf("ReadSystemStats failed: %v", err)
+	}
+	if s.CPUPercent < 0 || s.CPUPercent > 100 {
+		t.Errorf("CPUPercent out of range: %f", s.CPUPercent)
+	}
+	if s.MemPercent < 0 || s.MemPercent > 100 {
+		t.Errorf("MemPercent out of range: %f", s.MemPercent)
 	}
 }
