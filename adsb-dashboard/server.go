@@ -3,10 +3,8 @@ package main
 import (
 	"encoding/json"
 	"embed"
-	"fmt"
 	"io/fs"
 	"net/http"
-	"os"
 	"sync/atomic"
 	"time"
 )
@@ -100,32 +98,4 @@ func (s *Server) staticHandler() http.Handler {
 		return http.NotFoundHandler()
 	}
 	return http.FileServer(http.FS(sub))
-}
-
-func main() {
-	statsPath := "/run/dump1090-fa/stats.json"
-	if p := os.Getenv("STATS_PATH"); p != "" {
-		statsPath = p
-	}
-
-	pollInterval := 60 * time.Second
-	if s := os.Getenv("POLL_INTERVAL"); s != "" {
-		if d, err := time.ParseDuration(s); err == nil {
-			pollInterval = d
-		}
-	}
-
-	addr := ":8080"
-	if a := os.Getenv("ADDR"); a != "" {
-		addr = a
-	}
-
-	broker := NewBroker()
-	server := NewServer(broker, statsPath, pollInterval)
-
-	fmt.Fprintf(os.Stderr, "ADS-B dashboard listening on %s\n", addr)
-	if err := http.ListenAndServe(addr, server); err != nil {
-		fmt.Fprintf(os.Stderr, "server error: %v\n", err)
-		os.Exit(1)
-	}
 }
