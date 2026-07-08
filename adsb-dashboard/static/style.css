@@ -67,3 +67,45 @@ canvas { display: block; max-width: 100%; }
 .ratio-low { color: #ef4444; }
 .throttled-ok { color: #3fb950; }
 .throttled-warn { color: #f59e0b; }
+
+.dashboard-footer {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #21262d;
+  color: #8b949e;
+  font-size: 0.85rem;
+}
+
+.instructions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.inst-column h3 {
+  color: #c9d1d9;
+  font-size: 0.95rem;
+  margin-bottom: 0.75rem;
+}
+
+.inst-column ul {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+.inst-column li {
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
+}
+
+.inst-column strong {
+  color: #b1bac4;
+}
+
+@media (max-width: 768px) {
+  .instructions-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}

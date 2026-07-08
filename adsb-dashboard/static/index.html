@@ -49,5 +49,25 @@
   </div>
 </main>
 <script src="/script.js"></script>
+<footer class="dashboard-footer">
+  <div class="instructions-grid">
+    <div class="inst-column">
+      <h3>Quick Audit Playbook</h3>
+      <ul>
+        <li><strong>Hardware Base:</strong> If <span class="throttled-warn">Throttled</span> triggers, check your micro-USB voltage supply.</li>
+        <li><strong>Sky Noise:</strong> Noise above <span class="noise-red">-20 dB</span> signals high urban interference or low cloud cover (ducting).</li>
+        <li><strong>Filter Check:</strong> If noise is high but message rates hold steady, the SAW filter is successfully protecting the tuner.</li>
+      </ul>
+    </div>
+    <div class="inst-column">
+      <h3>Chart Diagnostics</h3>
+      <ul>
+        <li><strong>Clean Signal:</strong> A high Positioning Ratio (&ge;75%) means pings are crisp enough to decode full coordinates.</li>
+        <li><strong>Orange Markers:</strong> Dashed vertical lines indicate an adaptive gain change.</li>
+        <li><strong>Line Split:</strong> If the total messages and bad messages lines pull far apart, the receiver is battling heavy signal distortion.</li>
+      </ul>
+    </div>
+  </div>
+</footer>
 </body>
 </html>
