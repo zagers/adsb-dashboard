@@ -1,5 +1,11 @@
-const history = { messages: [], aircraft: [] };
-const MAX_HISTORY = 60;
+const MAX_HISTORY = 300;
+const history = {
+  messagesTotal: [],
+  messagesBad: [],
+  aircraftHeard: [],
+  aircraftPositioned: []
+};
+let gainChangeMarkers = [];
 
 function connect() {
   const es = new EventSource('/events');
@@ -26,72 +32,153 @@ function connect() {
 }
 
 function updateDashboard(data) {
-  const s = data.stats;
+  document.getElementById('mps-value').textContent = data.messages_per_sec.toFixed(1);
+  document.getElementById('mps-total').textContent = `total: ${data.total_messages.toLocaleString()}`;
 
-  document.getElementById('mps-value').textContent = (s.latest.valid || 0).toLocaleString();
-  document.getElementById('mps-total').textContent = `total: ${(s.latest.total || 0).toLocaleString()}`;
-
-  document.getElementById('ac-now').textContent = s.aircraft.now || 0;
-  document.getElementById('ac-max').textContent = `peak: ${s.aircraft.max || 0}`;
-
-  const strong = s.strong_ratio || (s.latest.total > 0 ? s.latest.strong / s.latest.total : 0);
-  const weak = s.weak_ratio || (s.latest.total > 0 ? s.latest.weak / s.latest.total : 0);
-  const err = s.error_ratio || (s.latest.total > 0 ? s.latest.error / s.latest.total : 0);
-  renderSignalBar(strong, weak, err);
+  renderAircraft(data);
+  renderSignalAndGain(data);
+  renderErrorRate(data);
 
   if (data.system) {
-    document.getElementById('sys-cpu').textContent = `CPU: ${data.system.cpu_percent.toFixed(1)}%`;
-    document.getElementById('sys-mem').textContent = `MEM: ${data.system.mem_percent.toFixed(1)}%`;
+    renderSystemHealth(data.system);
   }
 
-  const now = s.now ? new Date(s.now * 1000) : new Date();
-  const age = Math.floor((Date.now() - now.getTime()) / 1000);
-  document.getElementById('health-status').textContent = age < 120 ? 'healthy' : 'stale';
-  document.getElementById('health-age').textContent = `last update: ${age}s ago`;
+  const s = data.stats;
+  const lastMin = s ? s.last1min : null;
+  const age = lastMin ? Math.floor((Date.now() / 1000) - lastMin.end) : 0;
+  const healthEl = document.getElementById('health-status');
+  if (healthEl) {
+    healthEl.textContent = age < 120 ? 'healthy' : 'stale';
+  }
+  const healthAge = document.getElementById('health-age');
+  if (healthAge) {
+    healthAge.textContent = `last update: ${age}s ago`;
+  }
 
-  history.messages.push(s.latest.valid || 0);
-  history.aircraft.push(s.aircraft.now || 0);
-  if (history.messages.length > MAX_HISTORY) history.messages.shift();
-  if (history.aircraft.length > MAX_HISTORY) history.aircraft.shift();
+  if (data.gain_changed) {
+    gainChangeMarkers.push(history.messagesTotal.length);
+  }
 
-  drawSparkline('msg-sparkline', history.messages, '#2ea043');
-  drawSparkline('ac-sparkline', history.aircraft, '#58a6ff');
+  history.messagesTotal.push(data.messages_per_sec);
+  history.messagesBad.push(data.bad_messages_per_sec || 0);
+  history.aircraftHeard.push(data.tracks_heard || 0);
+  history.aircraftPositioned.push(data.positions_count || 0);
+
+  if (history.messagesTotal.length > MAX_HISTORY) {
+    history.messagesTotal.shift();
+    history.messagesBad.shift();
+    history.aircraftHeard.shift();
+    history.aircraftPositioned.shift();
+    gainChangeMarkers = gainChangeMarkers.map(m => m - 1).filter(m => m >= 0);
+  }
+
+  drawSparkline('msg-sparkline',
+    [history.messagesTotal, history.messagesBad],
+    ['#2ea043', '#8b0000'],
+    gainChangeMarkers);
+
+  drawSparkline('ac-sparkline',
+    [history.aircraftHeard, history.aircraftPositioned],
+    ['#58a6ff', '#6b7b8d'],
+    gainChangeMarkers);
 }
 
-function renderSignalBar(strong, weak, err) {
+function renderAircraft(data) {
+  const heard = data.tracks_heard || 0;
+  const pos = data.positions_count || 0;
+  const ratio = data.positioning_ratio || 0;
+
+  document.getElementById('ac-heard').innerHTML = `${heard} <span class="unit">heard</span>`;
+  document.getElementById('ac-positioned').textContent = `${pos} positioned (${ratio.toFixed(0)}%)`;
+
+  const ratioEl = document.getElementById('ac-pos-ratio');
+  if (ratioEl) {
+    ratioEl.textContent = ratio.toFixed(0);
+    ratioEl.className = ratio >= 75 ? 'ratio-high' : ratio >= 50 ? 'ratio-mid' : 'ratio-low';
+  }
+}
+
+function renderSignalAndGain(data) {
   const bar = document.getElementById('signal-bar');
+  const pct = (data.strong_signal_ratio * 100).toFixed(1);
   bar.innerHTML = `
-    <div class="bar-segment strong" style="width:${(strong * 100).toFixed(1)}%"></div>
-    <div class="bar-segment weak" style="width:${(weak * 100).toFixed(1)}%"></div>
-    <div class="bar-segment error" style="width:${(err * 100).toFixed(1)}%"></div>
+    <div class="bar-segment strong" style="width:${pct}%"></div>
+    <div class="bar-segment weak" style="width:${(100 - pct).toFixed(1)}%"></div>
   `;
-  document.getElementById('signal-labels').textContent =
-    `${(strong * 100).toFixed(0)}% strong · ${(weak * 100).toFixed(0)}% weak · ${(err * 100).toFixed(0)}% error`;
+
+  const noise = data.noise_floor;
+  const noiseClass = noise < -30 ? 'noise-green' : noise > -20 ? 'noise-red' : 'noise-yellow';
+
+  document.getElementById('signal-labels').innerHTML =
+    `<span>SNR: ${data.snr.toFixed(1)} dB</span>` +
+    `<span>Gain: ${(data.gain_db || 0).toFixed(1)} dB</span>` +
+    `<span class="${noiseClass}">Noise: ${noise.toFixed(1)} dB</span>`;
 }
 
-function drawSparkline(canvasId, values, color) {
+function renderErrorRate(data) {
+  const pct = (data.error_rate * 100).toFixed(1);
+  document.getElementById('err-rate').textContent = `${pct}% bad`;
+  document.getElementById('err-bad-mps').textContent = `${(data.bad_messages_per_sec || 0).toFixed(1)} bad/s`;
+  document.getElementById('err-strong').textContent = `${data.strong_signals_count || 0} strong pings`;
+}
+
+function renderSystemHealth(sys) {
+  document.getElementById('sys-cpu').textContent = `CPU: ${sys.cpu_percent.toFixed(1)}%`;
+  document.getElementById('sys-mem').textContent = `MEM: ${sys.mem_percent.toFixed(1)}%`;
+  const throttledEl = document.getElementById('sys-throttled');
+  const status = sys.throttled || 'Unknown';
+  throttledEl.textContent = `Throttled: ${status}`;
+  throttledEl.className = status === 'OK' ? 'throttled-ok' : 'throttled-warn';
+}
+
+function drawSparkline(canvasId, datasets, colors, markers) {
   const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
   const ctx = canvas.getContext('2d');
   const w = canvas.width;
   const h = canvas.height;
   ctx.clearRect(0, 0, w, h);
 
-  if (values.length < 2) return;
+  const primary = datasets[0];
+  if (primary.length === 0) return;
 
-  const max = Math.max(...values, 1);
-  const step = w / (values.length - 1);
+  const max = Math.max(...primary, 1);
+  const step = w / (primary.length - 1 || 1);
 
-  ctx.beginPath();
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 2;
-  ctx.moveTo(0, h - (values[0] / max) * (h - 4) - 2);
-
-  for (let i = 1; i < values.length; i++) {
-    const x = i * step;
-    const y = h - (values[i] / max) * (h - 4) - 2;
-    ctx.lineTo(x, y);
+  function drawLine(data, color, lineWidth) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = lineWidth;
+    ctx.beginPath();
+    ctx.moveTo(0, h - (data[0] / max) * (h - 4) - 2);
+    for (let i = 1; i < data.length; i++) {
+      const x = i * step;
+      const y = h - (data[i] / max) * (h - 4) - 2;
+      ctx.lineTo(x, y);
+    }
+    ctx.stroke();
   }
-  ctx.stroke();
+
+  drawLine(primary, colors[0], 2);
+
+  if (datasets.length > 1 && datasets[1].length > 0) {
+    drawLine(datasets[1], colors[1], 1.5);
+  }
+
+  if (markers && markers.length > 0) {
+    ctx.strokeStyle = '#f0883e';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 3]);
+    for (const idx of markers) {
+      if (idx >= 0 && idx < primary.length) {
+        const x = idx * step;
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, h);
+        ctx.stroke();
+      }
+    }
+    ctx.setLineDash([]);
+  }
 }
 
 connect();

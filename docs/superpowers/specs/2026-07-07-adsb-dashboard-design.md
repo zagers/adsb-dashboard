@@ -60,7 +60,7 @@ Responsive CSS grid, dark theme, cards with live-updating stats:
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `--port` | `8080` | HTTP server port |
+| `--port` | `8081` | HTTP server port |
 | `--stats` | `/run/dump1090-fa/stats.json` | Path to stats.json |
 | `--poll` | `60s` | How often to re-read stats.json |
 

@@ -19,23 +19,25 @@
   </div>
   <div class="card" id="card-ac">
     <h2>Aircraft Tracked</h2>
-    <div class="value" id="ac-now">--</div>
-    <div class="sub" id="ac-max">peak: --</div>
+    <div class="value" id="ac-heard">-- <span class="unit">heard</span></div>
+    <div class="sub" id="ac-positioned">-- positioned (<span id="ac-pos-ratio">--</span>%)</div>
   </div>
-  <div class="card" id="card-signal">
-    <h2>Signal Quality</h2>
+  <div class="card" id="card-signal-gain">
+    <h2>Signal &amp; Gain</h2>
     <div class="bar-container" id="signal-bar"></div>
     <div class="sub" id="signal-labels">--</div>
   </div>
-  <div class="card" id="card-sys">
-    <h2>System</h2>
-    <div class="value" id="sys-cpu">CPU: --</div>
-    <div class="sub" id="sys-mem">MEM: --</div>
+  <div class="card" id="card-error">
+    <h2>Error Rate</h2>
+    <div class="value" id="err-rate">--</div>
+    <div class="sub" id="err-bad-mps">--</div>
+    <div class="sub" id="err-strong">--</div>
   </div>
-  <div class="card" id="card-uptime">
-    <h2>Health</h2>
-    <div class="value" id="health-status">--</div>
-    <div class="sub" id="health-age">--</div>
+  <div class="card" id="card-syshealth">
+    <h2>System Health</h2>
+    <div class="sub" id="sys-cpu">CPU: --</div>
+    <div class="sub" id="sys-mem">MEM: --</div>
+    <div class="sub" id="sys-throttled">Throttled: --</div>
   </div>
   <div class="card wide" id="card-msg-history">
     <h2>Messages Over Time</h2>

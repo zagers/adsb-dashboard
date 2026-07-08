@@ -12,7 +12,7 @@ import (
 
 func main() {
 	addr := flag.String("addr", "127.0.0.1", "Bind address")
-	port := flag.Int("port", 8080, "HTTP port")
+	port := flag.Int("port", 8081, "HTTP port")
 	statsPath := flag.String("stats", "/run/dump1090-fa/stats.json", "Path to stats.json")
 	pollInterval := flag.Duration("poll", 60*time.Second, "Stats poll interval (minimum 10s)")
 	flag.Parse()

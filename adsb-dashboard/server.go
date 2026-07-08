@@ -45,40 +45,70 @@ func (s *Server) pollLoop() {
 	ticker := time.NewTicker(s.pollIntervalDuration())
 	defer ticker.Stop()
 
-	s.readAndBroadcast()
+	var prevGain float64
+
+	s.readAndBroadcast(&prevGain)
 
 	for range ticker.C {
-		s.readAndBroadcast()
+		s.readAndBroadcast(&prevGain)
 	}
 }
 
-func (s *Server) readAndBroadcast() {
+func (s *Server) readAndBroadcast(prevGain *float64) {
 	stats, err := ReadStatsFile(s.statsPath)
 	if err != nil {
 		return
 	}
 
-	sysStats, err := ReadSystemStats()
-	if err != nil {
-		return
-	}
+	currentGain := stats.GainDB()
+	gainChanged := *prevGain != 0.0 && *prevGain != currentGain
+	*prevGain = currentGain
+
+	sysStats, _ := ReadSystemStats()
+	sysStats.ThrottledStatus = getThrottledStatus()
 
 	s.lastSnapshot.Store(&ServerSnapshot{Stats: stats, System: sysStats})
 
 	type payload struct {
-		Stats       *Stats       `json:"stats"`
-		System      *SystemStats `json:"system"`
-		StrongRatio float64      `json:"strong_ratio"`
-		WeakRatio   float64      `json:"weak_ratio"`
-		ErrorRatio  float64      `json:"error_ratio"`
+		Stats              *Stats       `json:"stats"`
+		System             *SystemStats `json:"system"`
+		MessagesPerSec     float64      `json:"messages_per_sec"`
+		AircraftNow        int          `json:"aircraft_now"`
+		AircraftPeak       int          `json:"aircraft_peak"`
+		StrongSignalRatio  float64      `json:"strong_signal_ratio"`
+		SNR                float64      `json:"snr"`
+		SignalStrength     float64      `json:"signal_strength"`
+		NoiseFloor         float64      `json:"noise_floor"`
+		TotalMessages      int64        `json:"total_messages"`
+		GainDB             float64      `json:"gain_db"`
+		GainChanged        bool         `json:"gain_changed"`
+		TracksHeard        int          `json:"tracks_heard"`
+		PositionsCount     int          `json:"positions_count"`
+		PositioningRatio   float64      `json:"positioning_ratio"`
+		BadMessagesPerSec  float64      `json:"bad_messages_per_sec"`
+		ErrorRate          float64      `json:"error_rate"`
+		StrongSignalsCount int          `json:"strong_signals_count"`
 	}
 
 	data, err := json.Marshal(payload{
-		Stats:       stats,
-		System:      sysStats,
-		StrongRatio: stats.StrongRatio(),
-		WeakRatio:   stats.WeakRatio(),
-		ErrorRatio:  stats.ErrorRatio(),
+		Stats:              stats,
+		System:             sysStats,
+		MessagesPerSec:     stats.MessagesPerSec(),
+		AircraftNow:        stats.AircraftNow(),
+		AircraftPeak:       stats.AircraftPeak(),
+		StrongSignalRatio:  stats.StrongSignalRatio(),
+		SNR:                stats.SNR(),
+		SignalStrength:     stats.SignalStrength(),
+		NoiseFloor:         stats.NoiseFloor(),
+		TotalMessages:      stats.TotalMessages(),
+		GainDB:             currentGain,
+		GainChanged:        gainChanged,
+		TracksHeard:        stats.TracksHeard(),
+		PositionsCount:     stats.PositionsCount(),
+		PositioningRatio:   stats.PositioningRatio(),
+		BadMessagesPerSec:  stats.BadMessagesPerSec(),
+		ErrorRate:          stats.ErrorRate(),
+		StrongSignalsCount: stats.StrongSignalsCount(),
 	})
 	if err != nil {
 		return
