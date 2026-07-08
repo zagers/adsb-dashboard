@@ -1,0 +1,19 @@
+[Unit]
+Description=ADS-B Performance Dashboard
+After=network.target dump1090-fa.service
+Wants=dump1090-fa.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/adsb-dashboard
+Restart=on-failure
+RestartSec=10
+CPUSchedulingPolicy=idle
+IOSchedulingClass=idle
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadOnlyPaths=/run/dump1090-fa/stats.json /proc
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
