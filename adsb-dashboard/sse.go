@@ -7,15 +7,13 @@ import (
 )
 
 type Broker struct {
-	mu       sync.RWMutex
-	clients  map[chan []byte]struct{}
-	register chan chan []byte
+	mu      sync.RWMutex
+	clients map[chan []byte]struct{}
 }
 
 func NewBroker() *Broker {
 	return &Broker{
-		clients:  make(map[chan []byte]struct{}),
-		register: make(chan chan []byte),
+		clients: make(map[chan []byte]struct{}),
 	}
 }
 

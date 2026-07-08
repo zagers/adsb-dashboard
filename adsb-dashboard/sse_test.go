@@ -57,8 +57,7 @@ func TestBrokerServeHTTP(t *testing.T) {
 	req, _ := http.NewRequestWithContext(ctx, "GET", server.URL, nil)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		// After timeout, the client may get a connection error
-		return
+		t.Fatalf("SSE request failed: %v", err)
 	}
 	defer resp.Body.Close()
 

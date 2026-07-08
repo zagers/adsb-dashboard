@@ -12,12 +12,16 @@ import (
 //go:embed static
 var staticFS embed.FS
 
+type ServerSnapshot struct {
+	Stats  *Stats
+	System *SystemStats
+}
+
 type Server struct {
-	broker       *Broker
-	statsPath    string
-	pollInterval time.Duration
-	lastStats    atomic.Value // stores *Stats
-	lastSysStats atomic.Value // stores *SystemStats
+	broker        *Broker
+	statsPath     string
+	pollInterval  time.Duration
+	lastSnapshot  atomic.Value
 }
 
 func NewServer(broker *Broker, statsPath string, pollInterval time.Duration) *Server {
@@ -53,20 +57,32 @@ func (s *Server) readAndBroadcast() {
 	if err != nil {
 		return
 	}
-	s.lastStats.Store(stats)
 
 	sysStats, err := ReadSystemStats()
 	if err != nil {
 		return
 	}
-	s.lastSysStats.Store(sysStats)
+
+	s.lastSnapshot.Store(&ServerSnapshot{Stats: stats, System: sysStats})
 
 	type payload struct {
-		Stats  *Stats       `json:"stats"`
-		System *SystemStats `json:"system"`
+		Stats       *Stats       `json:"stats"`
+		System      *SystemStats `json:"system"`
+		StrongRatio float64      `json:"strong_ratio"`
+		WeakRatio   float64      `json:"weak_ratio"`
+		ErrorRatio  float64      `json:"error_ratio"`
 	}
 
-	data, _ := json.Marshal(payload{Stats: stats, System: sysStats})
+	data, err := json.Marshal(payload{
+		Stats:       stats,
+		System:      sysStats,
+		StrongRatio: stats.StrongRatio(),
+		WeakRatio:   stats.WeakRatio(),
+		ErrorRatio:  stats.ErrorRatio(),
+	})
+	if err != nil {
+		return
+	}
 	s.broker.Broadcast(data)
 }
 
@@ -80,12 +96,11 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) healthHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	stats := s.lastStats.Load()
+	snap := s.lastSnapshot.Load()
 	status := "ok"
-	if stats == nil {
+	if snap == nil {
 		status = "no_data"
 	}
-
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": status,
 		"time":   time.Now().Unix(),
