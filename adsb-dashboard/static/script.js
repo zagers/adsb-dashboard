@@ -154,8 +154,7 @@ function renderSignalAndGain(data) {
 }
 
 function renderErrorRate(data) {
-  const pct = (data.error_rate * 100).toFixed(1);
-  document.getElementById('err-rate').textContent = `${pct}% bad`;
+  document.getElementById('err-rate').textContent = `${data.error_rate.toFixed(1)}% bad`;
   document.getElementById('err-bad-mps').textContent = `${(data.bad_messages_per_sec || 0).toFixed(1)} bad/s`;
   document.getElementById('err-strong').textContent = `${data.strong_signals_count || 0} strong pings`;
 }

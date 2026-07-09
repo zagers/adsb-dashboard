@@ -105,11 +105,10 @@ func (s Stats) StrongSignalsCount() int {
 }
 
 func (s Stats) ErrorRate() float64 {
-	total := s.Last1Min.Local.Modes + s.Last1Min.Local.Bad
-	if total == 0 {
+	if s.Last1Min.Local.Modes == 0 {
 		return 0.0
 	}
-	return float64(s.Last1Min.Local.Bad) / float64(total)
+	return (float64(s.Last1Min.Local.Bad) / float64(s.Last1Min.Local.Modes)) * 100.0
 }
 
 func (s Stats) PositioningRatio() float64 {

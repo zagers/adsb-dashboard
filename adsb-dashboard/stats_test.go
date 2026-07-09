@@ -81,8 +81,8 @@ func TestStatsDerived(t *testing.T) {
 		t.Errorf("bad_messages_per_sec expected ~62818, got %f", badPS)
 	}
 	er := s.ErrorRate()
-	if er < 0.69 || er > 0.71 {
-		t.Errorf("error_rate expected ~0.701, got %f", er)
+	if er < 230 || er > 240 {
+		t.Errorf("error_rate expected ~234 (bad/modes*100), got %f", er)
 	}
 	if s.StrongSignalsCount() != 284 {
 		t.Errorf("expected strong_signals 284, got %d", s.StrongSignalsCount())
