@@ -34,7 +34,6 @@ function saveHistory() {
 const history = loadHistory();
 let gainChangeMarkers = [];
 
-// restore markers from storage
 try {
   const raw = localStorage.getItem(STORAGE_KEY);
   if (raw) {
@@ -43,35 +42,84 @@ try {
   }
 } catch (_) {}
 
-function connect() {
-  const es = new EventSource('/events');
-  const status = document.getElementById('status');
-
-  es.onopen = () => {
-    status.textContent = 'live';
-    status.className = 'status-indicator online';
-  };
-
-  es.onerror = () => {
-    status.textContent = 'disconnected';
-    status.className = 'status-indicator offline';
-  };
-
-  es.onmessage = (e) => {
-    try {
-      const data = JSON.parse(e.data);
-      updateDashboard(data);
-    } catch (err) {
-      console.error('parse error:', err);
-    }
-  };
+function updateStatus(online) {
+  const el = document.getElementById('status');
+  if (online) {
+    el.textContent = 'live';
+    el.className = 'status-indicator online';
+  } else {
+    el.textContent = 'disconnected';
+    el.className = 'status-indicator offline';
+  }
 }
 
-function updateDashboard(data) {
+function handleStatsMessage(e) {
+  try {
+    const data = JSON.parse(e.data);
+    updateStats(data);
+    pushMsgHistory(data);
+    saveHistory();
+    drawMsgSparkline();
+    drawAcSparkline();
+  } catch (err) {
+    console.error('stats parse error:', err);
+  }
+}
+
+function handleAircraftMessage(e) {
+  try {
+    const data = JSON.parse(e.data);
+    data.positioning_ratio = data.tracks_heard > 0
+      ? (data.positions_count / data.tracks_heard) * 100
+      : 0;
+    renderAircraft(data);
+    pushAcHistory(data);
+    saveHistory();
+    drawAcSparkline();
+  } catch (err) {
+    console.error('aircraft parse error:', err);
+  }
+}
+
+function connect() {
+  const statsES = new EventSource('/events');
+  statsES.onopen = () => updateStatus(true);
+  statsES.onerror = () => updateStatus(false);
+  statsES.onmessage = handleStatsMessage;
+
+  const acES = new EventSource('/events/aircraft');
+  acES.onmessage = handleAircraftMessage;
+}
+
+function pushMsgHistory(data) {
+  if (data.gain_changed) {
+    gainChangeMarkers.push(history.messagesTotal.length);
+  }
+
+  history.messagesTotal.push(data.messages_per_sec);
+  history.messagesBad.push(data.bad_messages_per_sec || 0);
+
+  while (history.messagesTotal.length > MAX_HISTORY) {
+    history.messagesTotal.shift();
+    history.messagesBad.shift();
+    gainChangeMarkers = gainChangeMarkers.map(m => m - 1).filter(m => m >= 0);
+  }
+}
+
+function pushAcHistory(data) {
+  history.aircraftHeard.push(data.tracks_heard || 0);
+  history.aircraftPositioned.push(data.positions_count || 0);
+
+  while (history.aircraftHeard.length > MAX_HISTORY) {
+    history.aircraftHeard.shift();
+    history.aircraftPositioned.shift();
+  }
+}
+
+function updateStats(data) {
   document.getElementById('mps-value').textContent = data.messages_per_sec.toFixed(1);
   document.getElementById('mps-total').textContent = `total: ${data.total_messages.toLocaleString()}`;
 
-  renderAircraft(data);
   renderSignalAndGain(data);
   renderErrorRate(data);
 
@@ -79,46 +127,7 @@ function updateDashboard(data) {
     renderSystemHealth(data.system);
   }
 
-  const s = data.stats;
-  const lastMin = s ? s.last1min : null;
-  const age = lastMin ? Math.floor((Date.now() / 1000) - lastMin.end) : 0;
-  const healthEl = document.getElementById('health-status');
-  if (healthEl) {
-    healthEl.textContent = age < 120 ? 'healthy' : 'stale';
-  }
-  const healthAge = document.getElementById('health-age');
-  if (healthAge) {
-    healthAge.textContent = `last update: ${age}s ago`;
-  }
 
-  if (data.gain_changed) {
-    gainChangeMarkers.push(history.messagesTotal.length);
-  }
-
-  history.messagesTotal.push(data.messages_per_sec);
-  history.messagesBad.push(data.bad_messages_per_sec || 0);
-  history.aircraftHeard.push(data.tracks_heard || 0);
-  history.aircraftPositioned.push(data.positions_count || 0);
-
-  if (history.messagesTotal.length > MAX_HISTORY) {
-    history.messagesTotal.shift();
-    history.messagesBad.shift();
-    history.aircraftHeard.shift();
-    history.aircraftPositioned.shift();
-    gainChangeMarkers = gainChangeMarkers.map(m => m - 1).filter(m => m >= 0);
-  }
-
-  saveHistory();
-
-  drawSparkline('msg-sparkline',
-    [history.messagesTotal, history.messagesBad],
-    ['#2ea043', '#8b0000'],
-    gainChangeMarkers);
-
-  drawSparkline('ac-sparkline',
-    [history.aircraftHeard, history.aircraftPositioned],
-    ['#58a6ff', '#6b7b8d'],
-    gainChangeMarkers);
 }
 
 function renderAircraft(data) {
@@ -166,6 +175,20 @@ function renderSystemHealth(sys) {
   const status = sys.throttled || 'Unknown';
   throttledEl.textContent = `Throttled: ${status}`;
   throttledEl.className = status === 'OK' ? 'throttled-ok' : 'throttled-warn';
+}
+
+function drawMsgSparkline() {
+  drawSparkline('msg-sparkline',
+    [history.messagesTotal, history.messagesBad],
+    ['#2ea043', '#8b0000'],
+    gainChangeMarkers);
+}
+
+function drawAcSparkline() {
+  drawSparkline('ac-sparkline',
+    [history.aircraftHeard, history.aircraftPositioned],
+    ['#58a6ff', '#6b7b8d'],
+    []);
 }
 
 function drawSparkline(canvasId, datasets, colors, markers) {

@@ -22,15 +22,22 @@ type Server struct {
 	statsPath     string
 	pollInterval  time.Duration
 	lastSnapshot  atomic.Value
+	acBroker      *Broker
+	aircraftPath  string
 }
 
-func NewServer(broker *Broker, statsPath string, pollInterval time.Duration) *Server {
+func NewServer(broker *Broker, statsPath string, pollInterval time.Duration, acBroker *Broker, aircraftPath string) *Server {
 	s := &Server{
 		broker:       broker,
 		statsPath:    statsPath,
 		pollInterval: pollInterval,
+		acBroker:     acBroker,
+		aircraftPath: aircraftPath,
 	}
 	go s.pollLoop()
+	if s.aircraftPath != "" && s.acBroker != nil {
+		go s.aircraftLoop()
+	}
 	return s
 }
 
@@ -116,10 +123,34 @@ func (s *Server) readAndBroadcast(prevGain *float64) {
 	s.broker.Broadcast(data)
 }
 
+func (s *Server) aircraftLoop() {
+	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		ac, err := ReadAircraftFile(s.aircraftPath)
+		if err != nil {
+			continue
+		}
+
+		data, err := json.Marshal(map[string]interface{}{
+			"tracks_heard":     ac.TracksHeard(),
+			"positions_count":  ac.PositionsCount(),
+		})
+		if err != nil {
+			continue
+		}
+		s.acBroker.Broadcast(data)
+	}
+}
+
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", s.healthHandler)
 	mux.Handle("/events", s.broker)
+	if s.acBroker != nil {
+		mux.Handle("/events/aircraft", s.acBroker)
+	}
 	mux.Handle("/", s.staticHandler())
 	mux.ServeHTTP(w, r)
 }

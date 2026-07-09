@@ -11,7 +11,7 @@ import (
 
 func TestServerHealthEndpoint(t *testing.T) {
 	broker := NewBroker()
-	s := NewServer(broker, "/tmp/stats.json", 60*time.Second)
+	s := NewServer(broker, "/tmp/stats.json", 60*time.Second, nil, "")
 
 	req := httptest.NewRequest("GET", "/health", nil)
 	w := httptest.NewRecorder()
@@ -33,7 +33,7 @@ func TestServerHealthEndpoint(t *testing.T) {
 
 func TestServerRootEndpoint(t *testing.T) {
 	broker := NewBroker()
-	s := NewServer(broker, "/tmp/stats.json", 60*time.Second)
+	s := NewServer(broker, "/tmp/stats.json", 60*time.Second, nil, "")
 
 	req := httptest.NewRequest("GET", "/", nil)
 	w := httptest.NewRecorder()
@@ -51,7 +51,7 @@ func TestServerRootEndpoint(t *testing.T) {
 
 func TestServerSSEEndpoint(t *testing.T) {
 	broker := NewBroker()
-	s := NewServer(broker, "/tmp/stats.json", 60*time.Second)
+	s := NewServer(broker, "/tmp/stats.json", 60*time.Second, nil, "")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()
@@ -72,7 +72,7 @@ func TestServerSSEEndpoint(t *testing.T) {
 
 func TestServerNotFound(t *testing.T) {
 	broker := NewBroker()
-	s := NewServer(broker, "/tmp/stats.json", 60*time.Second)
+	s := NewServer(broker, "/tmp/stats.json", 60*time.Second, nil, "")
 
 	req := httptest.NewRequest("GET", "/nonexistent", nil)
 	w := httptest.NewRecorder()

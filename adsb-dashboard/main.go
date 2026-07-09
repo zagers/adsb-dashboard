@@ -15,6 +15,7 @@ func main() {
 	port := flag.Int("port", 8081, "HTTP port")
 	statsPath := flag.String("stats", "/run/dump1090-fa/stats.json", "Path to stats.json")
 	pollInterval := flag.Duration("poll", 60*time.Second, "Stats poll interval (minimum 10s)")
+	aircraftPath := flag.String("aircraft", "/run/dump1090-fa/aircraft.json", "Path to aircraft.json (1s live data)")
 	flag.Parse()
 
 	// Enforce minimum poll interval
@@ -29,7 +30,8 @@ func main() {
 	}
 
 	broker := NewBroker()
-	server := NewServer(broker, *statsPath, *pollInterval)
+	acBroker := NewBroker()
+	server := NewServer(broker, *statsPath, *pollInterval, acBroker, *aircraftPath)
 
 	listenAddr := net.JoinHostPort(*addr, fmt.Sprintf("%d", *port))
 	log.Printf("Starting ADS-B dashboard on %s", listenAddr)

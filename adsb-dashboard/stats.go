@@ -246,6 +246,45 @@ func readMemPercent() (float64, error) {
 	return float64(used) / float64(total) * 100, nil
 }
 
+type AircraftEntry struct {
+	Hex  string   `json:"hex"`
+	Seen float64  `json:"seen"`
+	Lat  *float64 `json:"lat,omitempty"`
+	Lon  *float64 `json:"lon,omitempty"`
+}
+
+type AircraftJSON struct {
+	Now      float64          `json:"now"`
+	Messages int64            `json:"messages"`
+	Aircraft []AircraftEntry  `json:"aircraft"`
+}
+
+func (a AircraftJSON) TracksHeard() int {
+	return len(a.Aircraft)
+}
+
+func (a AircraftJSON) PositionsCount() int {
+	count := 0
+	for _, ac := range a.Aircraft {
+		if ac.Lat != nil && ac.Lon != nil {
+			count++
+		}
+	}
+	return count
+}
+
+func ReadAircraftFile(path string) (*AircraftJSON, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	var a AircraftJSON
+	if err := json.Unmarshal(data, &a); err != nil {
+		return nil, err
+	}
+	return &a, nil
+}
+
 func parseMemValue(line string) uint64 {
 	fields := strings.Fields(line)
 	if len(fields) < 2 {
