@@ -1,11 +1,47 @@
 const MAX_HISTORY = 300;
-const history = {
-  messagesTotal: [],
-  messagesBad: [],
-  aircraftHeard: [],
-  aircraftPositioned: []
-};
+const STORAGE_KEY = 'adsb-history';
+
+function loadHistory() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const saved = JSON.parse(raw);
+      if (saved.messagesTotal && saved.messagesTotal.length > 0) {
+        return {
+          messagesTotal: saved.messagesTotal,
+          messagesBad: saved.messagesBad || [],
+          aircraftHeard: saved.aircraftHeard || [],
+          aircraftPositioned: saved.aircraftPositioned || []
+        };
+      }
+    }
+  } catch (_) {}
+  return { messagesTotal: [], messagesBad: [], aircraftHeard: [], aircraftPositioned: [] };
+}
+
+function saveHistory() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      messagesTotal: history.messagesTotal,
+      messagesBad: history.messagesBad,
+      aircraftHeard: history.aircraftHeard,
+      aircraftPositioned: history.aircraftPositioned,
+      gainMarkers: gainChangeMarkers
+    }));
+  } catch (_) {}
+}
+
+const history = loadHistory();
 let gainChangeMarkers = [];
+
+// restore markers from storage
+try {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (raw) {
+    const saved = JSON.parse(raw);
+    if (saved.gainMarkers) gainChangeMarkers = saved.gainMarkers;
+  }
+} catch (_) {}
 
 function connect() {
   const es = new EventSource('/events');
@@ -71,6 +107,8 @@ function updateDashboard(data) {
     history.aircraftPositioned.shift();
     gainChangeMarkers = gainChangeMarkers.map(m => m - 1).filter(m => m >= 0);
   }
+
+  saveHistory();
 
   drawSparkline('msg-sparkline',
     [history.messagesTotal, history.messagesBad],
