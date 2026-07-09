@@ -129,19 +129,11 @@ func (s Stats) MessagesPerSec() float64 {
 }
 
 func (s Stats) AircraftNow() int {
-	if len(s.Last1Min.Local.Accepted) > 0 {
-		return s.Last1Min.Local.Accepted[0]
-	}
-	return 0
+	return s.Last1Min.Tracks.All
 }
 
 func (s Stats) AircraftPeak() int {
-	peaks := []int{}
-	for _, w := range []TimeWindowStats{s.Last1Min, s.Last5Min, s.Last15Min} {
-		if len(w.Local.Accepted) > 0 {
-			peaks = append(peaks, w.Local.Accepted[0])
-		}
-	}
+	peaks := []int{s.Last1Min.Tracks.All, s.Last5Min.Tracks.All, s.Last15Min.Tracks.All}
 	max := 0
 	for _, p := range peaks {
 		if p > max {

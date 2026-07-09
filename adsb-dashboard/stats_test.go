@@ -47,12 +47,12 @@ func TestStatsDerived(t *testing.T) {
 		t.Errorf("messages_per_sec expected ~14.2, got %f", mps)
 	}
 
-	if s.AircraftNow() != 784 {
-		t.Errorf("expected 784, got %d", s.AircraftNow())
+	if s.AircraftNow() != 7 {
+		t.Errorf("expected 7 (tracks.all), got %d", s.AircraftNow())
 	}
 
-	if s.AircraftPeak() < 784 {
-		t.Errorf("expected peak >= 784, got %d", s.AircraftPeak())
+	if s.AircraftPeak() != 90 {
+		t.Errorf("expected peak 90 (max tracks.all), got %d", s.AircraftPeak())
 	}
 
 	sr := s.StrongSignalRatio()
