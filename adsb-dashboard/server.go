@@ -78,6 +78,7 @@ func (s *Server) readAndBroadcast(prevGain *float64) {
 	type payload struct {
 		Stats              *Stats       `json:"stats"`
 		System             *SystemStats `json:"system"`
+		Version            int64        `json:"version"`
 		MessagesPerSec     float64      `json:"messages_per_sec"`
 		AircraftNow        int          `json:"aircraft_now"`
 		AircraftPeak       int          `json:"aircraft_peak"`
@@ -99,6 +100,7 @@ func (s *Server) readAndBroadcast(prevGain *float64) {
 	data, err := json.Marshal(payload{
 		Stats:              stats,
 		System:             sysStats,
+		Version:            startedAt,
 		MessagesPerSec:     stats.MessagesPerSec(),
 		AircraftNow:        stats.AircraftNow(),
 		AircraftPeak:       stats.AircraftPeak(),

@@ -53,9 +53,16 @@ function updateStatus(online) {
   }
 }
 
+let pageVersion = null;
+
 function handleStatsMessage(e) {
   try {
     const data = JSON.parse(e.data);
+    if (pageVersion !== null && data.version !== pageVersion) {
+      location.reload();
+      return;
+    }
+    pageVersion = data.version;
     updateStats(data);
     pushMsgHistory(data);
     saveHistory();

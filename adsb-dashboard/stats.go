@@ -249,6 +249,7 @@ func (c *ThrottleCache) Get() string {
 var (
 	cpuReader     = &CPUReader{}
 	throttleCache = &ThrottleCache{}
+	startedAt     = time.Now().Unix()
 )
 
 func ReadStatsFile(path string) (*Stats, error) {
