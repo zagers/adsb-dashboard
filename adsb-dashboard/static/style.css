@@ -17,7 +17,7 @@ h1 { font-size: 1.5rem; font-weight: 600; }
   padding: 0.25rem 0.75rem;
   border-radius: 999px;
   background: #21262d;
-  color: #8b949e;
+  color: #b1bac4;
 }
 .status-indicator.online { background: #1a6f36; color: #7ee787; }
 .status-indicator.offline { background: #6e1616; color: #ff7b72; }
@@ -37,12 +37,12 @@ h1 { font-size: 1.5rem; font-weight: 600; }
   font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #8b949e;
+  color: #b1bac4;
   margin-bottom: 0.5rem;
 }
 .value { font-size: 2rem; font-weight: 700; }
-.unit { font-size: 0.9rem; font-weight: 400; color: #8b949e; }
-.sub { font-size: 0.85rem; color: #8b949e; margin-top: 0.25rem; }
+.unit { font-size: 0.9rem; font-weight: 400; color: #b1bac4; }
+.sub { font-size: 0.85rem; color: #b1bac4; margin-top: 0.25rem; }
 .bar-container {
   display: flex;
   height: 1.5rem;
@@ -72,7 +72,7 @@ canvas { display: block; max-width: 100%; }
   margin-top: 2rem;
   padding-top: 1.5rem;
   border-top: 1px solid #21262d;
-  color: #8b949e;
+  color: #b1bac4;
   font-size: 0.85rem;
 }
 

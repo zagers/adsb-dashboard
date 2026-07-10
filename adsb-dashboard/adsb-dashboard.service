@@ -12,7 +12,7 @@ CPUSchedulingPolicy=idle
 IOSchedulingClass=idle
 NoNewPrivileges=true
 ProtectSystem=strict
-ReadOnlyPaths=/run/dump1090-fa/stats.json /proc
+ReadOnlyPaths=/run/dump1090-fa/stats.json /run/dump1090-fa/aircraft.json /proc
 PrivateTmp=true
 
 [Install]

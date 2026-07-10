@@ -71,7 +71,10 @@ func (s *Server) readAndBroadcast(prevGain *float64) {
 	gainChanged := *prevGain != 0.0 && *prevGain != currentGain
 	*prevGain = currentGain
 
-	sysStats, _ := ReadSystemStats()
+	sysStats, err := ReadSystemStats()
+	if err != nil {
+		sysStats = &SystemStats{ThrottledStatus: "Unknown"}
+	}
 
 	s.lastSnapshot.Store(&ServerSnapshot{Stats: stats, System: sysStats})
 
