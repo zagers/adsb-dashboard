@@ -156,6 +156,92 @@ type SystemStats struct {
 	ThrottledStatus string  `json:"throttled"`
 }
 
+type CPUReader struct {
+	prevIdle  uint64
+	prevTotal uint64
+	prevTime  time.Time
+	ready     bool
+}
+
+func (r *CPUReader) Read() (float64, error) {
+	idle, total, err := readCPUTicks()
+	if err != nil {
+		return 0, err
+	}
+
+	now := time.Now()
+
+	if !r.ready {
+		r.prevIdle = idle
+		r.prevTotal = total
+		r.prevTime = now
+		r.ready = true
+		return 0, nil
+	}
+
+	totalDelta := total - r.prevTotal
+	idleDelta := idle - r.prevIdle
+
+	r.prevIdle = idle
+	r.prevTotal = total
+	r.prevTime = now
+
+	if totalDelta == 0 {
+		return 0, nil
+	}
+
+	return float64(totalDelta-idleDelta) / float64(totalDelta) * 100, nil
+}
+
+func readCPUTicks() (idle, total uint64, err error) {
+	data, err := os.ReadFile("/proc/stat")
+	if err != nil {
+		return 0, 0, err
+	}
+
+	lines := strings.SplitN(string(data), "\n", 2)
+	if len(lines) == 0 {
+		return 0, 0, fmt.Errorf("empty /proc/stat")
+	}
+	fields := strings.Fields(lines[0])
+	if len(fields) < 5 || fields[0] != "cpu" {
+		return 0, 0, fmt.Errorf("unexpected /proc/stat format")
+	}
+
+	var vals [4]uint64
+	for i := 0; i < 4; i++ {
+		vals[i], _ = strconv.ParseUint(fields[i+1], 10, 64)
+	}
+	return vals[3], vals[0] + vals[1] + vals[2] + vals[3], nil
+}
+
+type ThrottleCache struct {
+	status    string
+	lastCheck time.Time
+	interval  time.Duration
+	checker   func() string
+}
+
+func (c *ThrottleCache) Get() string {
+	if c.interval == 0 {
+		c.interval = 60 * time.Second
+	}
+	if c.checker == nil {
+		c.checker = getThrottledStatus
+	}
+	if time.Since(c.lastCheck) < c.interval {
+		return c.status
+	}
+	c.lastCheck = time.Now()
+	c.status = c.checker()
+	return c.status
+}
+
+var (
+	cpuReader     = &CPUReader{}
+	throttleCache = &ThrottleCache{}
+)
+
 func ReadStatsFile(path string) (*Stats, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -171,53 +257,16 @@ func ReadStatsFile(path string) (*Stats, error) {
 }
 
 func ReadSystemStats() (*SystemStats, error) {
-	cpu, err := readCPUPercent()
-	if err != nil {
-		return nil, err
-	}
+	cpu, _ := cpuReader.Read()
 	mem, err := readMemPercent()
 	if err != nil {
 		return nil, err
 	}
-	return &SystemStats{CPUPercent: cpu, MemPercent: mem}, nil
-}
-
-func readCPUPercent() (float64, error) {
-	data, err := os.ReadFile("/proc/stat")
-	if err != nil {
-		return 0, err
-	}
-
-	var cpuUser, cpuNice, cpuSystem, cpuIdle uint64
-	_, err = fmt.Sscanf(string(data), "cpu %d %d %d %d", &cpuUser, &cpuNice, &cpuSystem, &cpuIdle)
-	if err != nil {
-		return 0, err
-	}
-
-	total := cpuUser + cpuNice + cpuSystem + cpuIdle
-	idle := cpuIdle
-
-	time.Sleep(100 * time.Millisecond)
-
-	data2, err := os.ReadFile("/proc/stat")
-	if err != nil {
-		return 0, err
-	}
-
-	var cpuUser2, cpuNice2, cpuSystem2, cpuIdle2 uint64
-	_, err = fmt.Sscanf(string(data2), "cpu %d %d %d %d", &cpuUser2, &cpuNice2, &cpuSystem2, &cpuIdle2)
-	if err != nil {
-		return 0, err
-	}
-
-	totalDelta := (cpuUser2 + cpuNice2 + cpuSystem2 + cpuIdle2) - total
-	idleDelta := cpuIdle2 - idle
-
-	if totalDelta == 0 {
-		return 0, nil
-	}
-
-	return float64(totalDelta-idleDelta) / float64(totalDelta) * 100, nil
+	return &SystemStats{
+		CPUPercent:      cpu,
+		MemPercent:      mem,
+		ThrottledStatus: throttleCache.Get(),
+	}, nil
 }
 
 func readMemPercent() (float64, error) {
@@ -232,9 +281,9 @@ func readMemPercent() (float64, error) {
 	for _, line := range lines {
 		switch {
 		case strings.HasPrefix(line, "MemTotal:"):
-			total = parseMemValue(line)
+			total, _ = parseMemValue(line)
 		case strings.HasPrefix(line, "MemAvailable:"):
-			available = parseMemValue(line)
+			available, _ = parseMemValue(line)
 		}
 	}
 
@@ -244,6 +293,18 @@ func readMemPercent() (float64, error) {
 
 	used := total - available
 	return float64(used) / float64(total) * 100, nil
+}
+
+func parseMemValue(line string) (uint64, error) {
+	fields := strings.Fields(line)
+	if len(fields) < 2 {
+		return 0, fmt.Errorf("unexpected format: %s", line)
+	}
+	v, err := strconv.ParseUint(fields[1], 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("parsing memory value: %w", err)
+	}
+	return v, nil
 }
 
 type AircraftEntry struct {
@@ -285,32 +346,29 @@ func ReadAircraftFile(path string) (*AircraftJSON, error) {
 	return &a, nil
 }
 
-func parseMemValue(line string) uint64 {
-	fields := strings.Fields(line)
-	if len(fields) < 2 {
-		return 0
-	}
-	v, _ := strconv.ParseUint(fields[1], 10, 64)
-	return v
-}
-
 func getThrottledStatus() string {
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
+	val := uint64(0)
 
-	out, err := exec.CommandContext(ctx, "vcgencmd", "get_throttled").Output()
-	if err != nil {
-		return "Unknown"
+	data, err := os.ReadFile("/sys/devices/platform/soc/soc:firmware/get_throttled")
+	if err == nil {
+		hexStr := strings.TrimSpace(string(data))
+		val, _ = strconv.ParseUint(hexStr, 16, 32)
+	} else {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		out, err2 := exec.CommandContext(ctx, "vcgencmd", "get_throttled").Output()
+		if err2 != nil {
+			return "Unknown"
+		}
+		parts := strings.Split(strings.TrimSpace(string(out)), "=")
+		if len(parts) != 2 {
+			return "OK"
+		}
+		hexStr := strings.TrimPrefix(parts[1], "0x")
+		val, _ = strconv.ParseUint(hexStr, 16, 32)
 	}
 
-	parts := strings.Split(strings.TrimSpace(string(out)), "=")
-	if len(parts) != 2 {
-		return "OK"
-	}
-	hexStr := strings.TrimPrefix(parts[1], "0x")
-
-	val, err := strconv.ParseUint(hexStr, 16, 32)
-	if err != nil || val == 0 {
+	if val == 0 {
 		return "OK"
 	}
 

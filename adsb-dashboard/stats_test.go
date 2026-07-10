@@ -26,7 +26,7 @@ func TestStatsParsing(t *testing.T) {
 		t.Errorf("expected 853, got %d", s.Last1Min.Messages)
 	}
 	if len(s.Last1Min.Local.Accepted) < 1 || s.Last1Min.Local.Accepted[0] != 784 {
-		t.Errorf("expected 784 aircraft, got %v", s.Last1Min.Local.Accepted)
+		t.Errorf("expected Accepted[0]=784 (short-frame messages), got %v", s.Last1Min.Local.Accepted)
 	}
 	if s.Last1Min.Local.Modes != 1608613 {
 		t.Errorf("expected 1608613, got %d", s.Last1Min.Local.Modes)
