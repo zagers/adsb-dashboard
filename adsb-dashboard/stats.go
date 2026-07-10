@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -157,6 +158,7 @@ type SystemStats struct {
 }
 
 type CPUReader struct {
+	mu        sync.Mutex
 	prevIdle  uint64
 	prevTotal uint64
 	prevTime  time.Time
@@ -164,6 +166,9 @@ type CPUReader struct {
 }
 
 func (r *CPUReader) Read() (float64, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	idle, total, err := readCPUTicks()
 	if err != nil {
 		return 0, err
@@ -216,6 +221,7 @@ func readCPUTicks() (idle, total uint64, err error) {
 }
 
 type ThrottleCache struct {
+	mu        sync.Mutex
 	status    string
 	lastCheck time.Time
 	interval  time.Duration
@@ -223,6 +229,9 @@ type ThrottleCache struct {
 }
 
 func (c *ThrottleCache) Get() string {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	if c.interval == 0 {
 		c.interval = 60 * time.Second
 	}
