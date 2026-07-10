@@ -54,17 +54,17 @@
     <div class="inst-column">
       <h3>Quick Audit Playbook</h3>
       <ul>
-        <li><strong>Hardware Base:</strong> If <span class="throttled-warn">Throttled</span> triggers, check your micro-USB voltage supply.</li>
-        <li><strong>Sky Noise:</strong> Noise above <span class="noise-red">-20 dB</span> signals high urban interference or low cloud cover (ducting).</li>
-        <li><strong>Filter Check:</strong> If noise is high but message rates hold steady, the SAW filter is successfully protecting the tuner.</li>
+        <li><strong>Hardware Base:</strong> If <span class="throttled-warn">Throttled</span> triggers a status change from OK, your power supply has dropped below 4.63V. Inspect the micro-USB cable immediately to prevent a core kernel crash.</li>
+        <li><strong>Sky Noise:</strong> Baseline background static should register between -25.0 dB and -35.0 dB. Readings climbing toward -15.0 dB or higher signal heavy local electromagnetic interference from nearby electronics or cell towers.</li>
+        <li><strong>Filter Check:</strong> If noise climbs past -20.0 dB but message throughput remains stable within your standard 45 msg/s to 175 msg/s traffic spectrum, your inline SAW filter is successfully isolating the 1090 MHz band from out-of-band signals.</li>
       </ul>
     </div>
     <div class="inst-column">
       <h3>Chart Diagnostics</h3>
       <ul>
-        <li><strong>Clean Signal:</strong> A high Positioning Ratio (&ge;75%) means pings are crisp enough to decode full coordinates.</li>
-        <li><strong>Orange Markers:</strong> Dashed vertical lines indicate an adaptive gain change.</li>
-        <li><strong>Line Split:</strong> If the total messages and bad messages lines pull far apart, the receiver is battling heavy signal distortion.</li>
+        <li><strong>Signal Accuracy:</strong> The Positioning Ratio measures coordinate resolution. Flawless outdoor setups achieve &ge;75%. Structural obstacles restrict indoor window deployments to a standard operational range of 40% to 60% due to signal attenuation.</li>
+        <li><strong>Orange Markers:</strong> Dashed vertical lines indicate an automatic software gain adjustment. The system dynamically steps the tuner up or down across a hardware range of 0.0 dB to 49.6 dB based on traffic volume.</li>
+        <li><strong>Line Split:</strong> Tracks the gap between the bright blue line (Total Heard) and dim line (Positioned). A normal window gap sits at 40% to 60%. If the lines diverge and the ratio drops below 25%, physical obstructions (like blinds or shifted antenna placement) are blocking complex coordinate packets while allowing basic radio pings through.</li>
       </ul>
     </div>
   </div>
