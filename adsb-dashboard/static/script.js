@@ -203,30 +203,24 @@ function drawSparkline(canvasId, datasets, colors, markers) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
-  const dpr = window.devicePixelRatio || 1;
-  const cssW = parseInt(canvas.getAttribute('width')) || canvas.width;
-  const cssH = parseInt(canvas.getAttribute('height')) || canvas.height;
-  if (canvas.width !== cssW * dpr) {
-    canvas.width = cssW * dpr;
-    canvas.height = cssH * dpr;
-  }
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  ctx.clearRect(0, 0, cssW, cssH);
+  const w = canvas.width;
+  const h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
 
   const primary = datasets[0];
   if (primary.length === 0) return;
 
   const max = Math.max(...primary, 1);
-  const step = cssW / (primary.length - 1 || 1);
+  const step = w / (primary.length - 1 || 1);
 
   function drawLine(data, color, lineWidth) {
     ctx.strokeStyle = color;
     ctx.lineWidth = lineWidth;
     ctx.beginPath();
-    ctx.moveTo(0, cssH - (data[0] / max) * (cssH - 4) - 2);
+    ctx.moveTo(0, h - (data[0] / max) * (h - 4) - 2);
     for (let i = 1; i < data.length; i++) {
       const x = i * step;
-      const y = cssH - (data[i] / max) * (cssH - 4) - 2;
+      const y = h - (data[i] / max) * (h - 4) - 2;
       ctx.lineTo(x, y);
     }
     ctx.stroke();
@@ -247,7 +241,7 @@ function drawSparkline(canvasId, datasets, colors, markers) {
         const x = idx * step;
         ctx.beginPath();
         ctx.moveTo(x, 0);
-        ctx.lineTo(x, cssH);
+        ctx.lineTo(x, h);
         ctx.stroke();
       }
     }
