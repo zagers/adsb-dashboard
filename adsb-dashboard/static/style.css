@@ -53,7 +53,7 @@ h1 { font-size: 1.5rem; font-weight: 600; }
 .bar-segment { transition: width 0.5s ease; }
 .bar-segment.strong { background: #2ea043; }
 .bar-segment.weak { background: #d29922; }
-canvas { display: block; max-width: 100%; }
+canvas { display: block; width: 100%; }
 #signal-labels {
   display: flex;
   gap: 1rem;
