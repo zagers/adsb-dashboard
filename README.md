@@ -1,6 +1,10 @@
 # ADS-B Performance Dashboard
 
+[![License: GPL v2](https://img.shields.io/badge/License-GPL%20v2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
+
 A lightweight, zero-dependency Go web dashboard for Raspberry Pi Zero that reads dump1090-fa's `stats.json` and displays real-time receiver performance metrics.
+
+![ADS-B Performance Dashboard](adsb-performance-dashboard.png)
 
 ## Features
 
