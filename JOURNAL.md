@@ -27,7 +27,7 @@ Built a lightweight Go web dashboard that reads from dump1090-fa's `stats.json` 
 
 ### Deployment
 
-Deployed to Pi at 192.168.x.x. Port changed from 8080 → 8081 due to conflict with piaware web interface. Systemd service configured with `CPUSchedulingPolicy=idle` and `IOSchedulingClass=idle`.
+Deployed to Pi on local network. Port changed from 8080 → 8081 due to conflict with piaware web interface. Systemd service configured with `CPUSchedulingPolicy=idle` and `IOSchedulingClass=idle`.
 
 ### Build
 

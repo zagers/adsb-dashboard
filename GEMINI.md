@@ -12,12 +12,11 @@ This workspace houses a high-performance ADS-B tracking and telemetry dashboard 
 ## 2. Real-World Physical Setup Constraints
 When conducting automated code reviews, refactoring, or generating logic plans, the agent **MUST** prioritize and account for the following environmental and physical parameters:
 
-* **Location Matrix:** High-density, heavy-interference urban footprint (Jersey City, NJ / NY Harbor airspace).
-* **Antenna Profile:** Balcony window deployment facing strictly **North and West**. 
-* **Obstruction Mitigation:** The physical line of sight is obstructed to the East by the building's infrastructure. Low-altitude tracking (e.g., helicopters over NY Harbor, the Hudson River, and East River) relies heavily on capturing **multipath reflections (signal bounces)** off buildings to the West/North.
-* **Cable Dynamics:** Connected via a high-shielding, low-loss **8-foot RG-316 silver-plated copper extension line** with standard SMA connectors.
-* **Signal Conditioning:** Uses a standalone inline **SAW Filter** placed immediately *before* the 8ft extension line (`Antenna -> SAW Filter -> 8ft RG-316 -> RTL-SDR Dongle -> Pi`).
-* **Software Radio Configuration:** Operating with FlightAware Adaptive Dynamic Range enabled (`adaptive-dynamic-range yes`), allowing the system to scale gain cleanly up to **49.6 dB** under clean airspace conditions due to the high protection provided by the SAW filter.
+* **Location Profile:** High-density, heavy-interference urban environment.
+* **Antenna Profile:** Window deployment with directional line-of-sight constraints. Building infrastructure may obstruct certain headings; low-altitude tracking may rely on multipath reflections off nearby structures.
+* **Cable Dynamics:** Low-loss RF extension cable with SMA connectors.
+* **Signal Conditioning:** Inline SAW filter for 1090 MHz band isolation.
+* **Software Radio Configuration:** Operating with FlightAware Adaptive Dynamic Range enabled (`adaptive-dynamic-range yes`), allowing the system to scale gain dynamically under clean airspace conditions.
 
 ---
 

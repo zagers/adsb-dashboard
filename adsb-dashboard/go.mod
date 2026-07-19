@@ -1,3 +1,3 @@
-module github.com/yourname/adsb-dashboard
+module github.com/zagers/adsb-dashboard
 
 go 1.21
