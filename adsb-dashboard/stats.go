@@ -21,28 +21,28 @@ type Stats struct {
 }
 
 type TimeWindowStats struct {
-	Start float64 `json:"start"`
-	End   float64 `json:"end"`
-	Local LocalStats `json:"local"`
-	CPR   CPRStats  `json:"cpr"`
-	CPU   CPUStats  `json:"cpu"`
-	Tracks TrackStats `json:"tracks"`
-	Messages int `json:"messages"`
+	Start    float64    `json:"start"`
+	End      float64    `json:"end"`
+	Local    LocalStats `json:"local"`
+	CPR      CPRStats   `json:"cpr"`
+	CPU      CPUStats   `json:"cpu"`
+	Tracks   TrackStats `json:"tracks"`
+	Messages int64      `json:"messages"`
 }
 
 type LocalStats struct {
-	SamplesProcessed int64   `json:"samples_processed"`
-	SamplesDropped   int64   `json:"samples_dropped"`
-	ModeAC           int     `json:"modeac"`
-	Modes            int     `json:"modes"`
-	Bad              int     `json:"bad"`
-	UnknownICAO      int     `json:"unknown_icao"`
-	Accepted         []int   `json:"accepted"`
-	Signal           float64 `json:"signal,omitempty"`
-	Noise            float64 `json:"noise,omitempty"`
-	PeakSignal       float64 `json:"peak_signal,omitempty"`
-	StrongSignals    int     `json:"strong_signals,omitempty"`
-	GainDB           float64 `json:"gain_db,omitempty"`
+	SamplesProcessed int64    `json:"samples_processed"`
+	SamplesDropped   int64    `json:"samples_dropped"`
+	ModeAC           int      `json:"modeac"`
+	Modes            int64    `json:"modes"`
+	Bad              int64    `json:"bad"`
+	UnknownICAO      int64    `json:"unknown_icao"`
+	Accepted         []int64  `json:"accepted"`
+	Signal           float64  `json:"signal,omitempty"`
+	Noise            float64  `json:"noise,omitempty"`
+	PeakSignal       float64  `json:"peak_signal,omitempty"`
+	StrongSignals    int64    `json:"strong_signals,omitempty"`
+	GainDB           float64  `json:"gain_db,omitempty"`
 }
 
 type CPRStats struct {
@@ -54,9 +54,9 @@ type CPRStats struct {
 }
 
 type CPUStats struct {
-	Demod      int `json:"demod"`
-	Reader     int `json:"reader"`
-	Background int `json:"background"`
+	Demod      int64 `json:"demod"`
+	Reader     int64 `json:"reader"`
+	Background int64 `json:"background"`
 }
 
 type TrackStats struct {
@@ -101,7 +101,7 @@ func (s Stats) BadMessagesPerSec() float64 {
 	return float64(s.Last1Min.Local.Bad) / 60.0
 }
 
-func (s Stats) StrongSignalsCount() int {
+func (s Stats) StrongSignalsCount() int64 {
 	return s.Last1Min.Local.StrongSignals
 }
 
@@ -149,7 +149,7 @@ func (s Stats) LastUpdateTime() time.Time {
 }
 
 func (s Stats) TotalMessages() int64 {
-	return int64(s.Total.Messages)
+	return s.Total.Messages
 }
 
 type SystemStats struct {

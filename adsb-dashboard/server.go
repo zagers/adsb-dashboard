@@ -97,7 +97,7 @@ func (s *Server) readAndBroadcast(prevGain *float64) {
 		PositioningRatio   float64      `json:"positioning_ratio"`
 		BadMessagesPerSec  float64      `json:"bad_messages_per_sec"`
 		ErrorRate          float64      `json:"error_rate"`
-		StrongSignalsCount int          `json:"strong_signals_count"`
+		StrongSignalsCount int64        `json:"strong_signals_count"`
 	}
 
 	data, err := json.Marshal(payload{
