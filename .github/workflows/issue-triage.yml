@@ -76,40 +76,41 @@ jobs:
               issueContext += `\n\nLatest Comment:\n${commentBody}`;
             }
 
-            const prompt = `You are an automated issue triage assistant for the adsb-dashboard repository (a zero-dependency Go web dashboard for ADS-B receivers on Raspberry Pi).
+            const promptParts = [
+              'You are an automated issue triage assistant for the adsb-dashboard repository (a zero-dependency Go web dashboard for ADS-B receivers on Raspberry Pi).',
+              '',
+              'Analyze the following issue and select the most appropriate existing labels from the Available Labels list:',
+              '',
+              'Issue Context:',
+              issueContext,
+              '',
+              'Available Labels (comma-separated):',
+              availableLabels,
+              '',
+              'Triage Guidelines:',
+              '1. Security (top priority): If the issue plausibly describes a security vulnerability (e.g. remote code execution, crash/panic/memory corruption from parsing stats.json/aircraft.json, authorization/credential bypass), output ONLY: security',
+              '2. Category (choose at most one directly supported label):',
+              '   - bug: Broken behavior, error logs, unexpected zero/frozen values, panics, or functional failures.',
+              '   - enhancement: New feature request or improvement (do not use "feature", use "enhancement").',
+              '   - documentation: Docs, comments, or README updates.',
+              '   - question: Usage inquiries or configuration questions.',
+              '   - needs-info: When essential details (logs, environment, receiver type) are missing to diagnose.',
+              '   - invalid or spam: For spam, gibberish, or test submissions.',
+              '3. Priority (choose at most one, only when justified):',
+              '   - priority/p0: Active security exploit, data loss, or total dashboard crash.',
+              '   - priority/p1: Major regression or blocking defect with no workaround.',
+              '   - priority/p2: Normal actionable defect or enhancement.',
+              '4. Additional:',
+              '   - help wanted or good first issue if suitable for community contributors.',
+              '   - duplicate if explicitly identified as a duplicate.',
+              '',
+              'Output Requirements:',
+              '- Output ONLY a comma-separated list of selected labels from the Available Labels list (maximum 4 labels).',
+              '- Do NOT include markdown formatting, backticks, code blocks, or explanatory text.',
+              '- If no labels apply, output an empty string.'
+            ];
 
-Analyze the following issue and select the most appropriate existing labels from the Available Labels list:
-
----
-${issueContext}
----
-
-Available Labels (comma-separated):
-${availableLabels}
-
-Triage Guidelines:
-1. Security (top priority): If the issue plausibly describes a security vulnerability (e.g. remote code execution, crash/panic/memory corruption from parsing stats.json/aircraft.json, authorization/credential bypass), output ONLY: security
-2. Category (choose at most one directly supported label):
-   - bug: Broken behavior, error logs, unexpected zero/frozen values, panics, or functional failures.
-   - enhancement: New feature request or improvement (do not use "feature", use "enhancement").
-   - documentation: Docs, comments, or README updates.
-   - question: Usage inquiries or configuration questions.
-   - needs-info: When essential details (logs, environment, receiver type) are missing to diagnose.
-   - invalid or spam: For spam, gibberish, or test submissions.
-3. Priority (choose at most one, only when justified):
-   - priority/p0: Active security exploit, data loss, or total dashboard crash.
-   - priority/p1: Major regression or blocking defect with no workaround.
-   - priority/p2: Normal actionable defect or enhancement.
-4. Additional:
-   - help wanted or good first issue if suitable for community contributors.
-   - duplicate if explicitly identified as a duplicate.
-
-Output Requirements:
-- Output ONLY a comma-separated list of selected labels from the Available Labels list (maximum 4 labels).
-- Do NOT include markdown formatting, backticks, code blocks, or explanatory text.
-- If no labels apply, output an empty string.`;
-
-            core.setOutput('prompt', prompt);
+            core.setOutput('prompt', promptParts.join('\n'));
 
       - name: Run Gemini issue analysis
         id: gemini_analysis
