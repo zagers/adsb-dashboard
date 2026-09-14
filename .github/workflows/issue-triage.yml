@@ -63,6 +63,7 @@ jobs:
         id: gemini_analysis
         uses: google-github-actions/run-gemini-cli@f77273f4c914e4bf38440cf36a0369cb64a37489 # ratchet:google-github-actions/run-gemini-cli@v0.1.22
         env:
+          GEMINI_CLI_TRUST_WORKSPACE: 'true'
           AVAILABLE_LABELS: ${{ steps.get_labels.outputs.available_labels }}
           ISSUE_TITLE: ${{ github.event.issue.title }}
           ISSUE_BODY: ${{ github.event.issue.body }}
