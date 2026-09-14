@@ -44,6 +44,7 @@ safe-outputs:
     max: 1
 timeout-minutes: 10
 model: gemini-3.5-flash-lite
+max-turn-cache-misses: 30
 ---
 # Issue Triage Assistant
 
