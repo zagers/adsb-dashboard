@@ -11,7 +11,9 @@ on:
 permissions:
   contents: read
   issues: read
-engine: gemini
+engine:
+  id: gemini
+  version: "0.43.0"
 tools:
   bash: false
   cli-proxy: false
