@@ -43,6 +43,7 @@ safe-outputs:
   add-comment:
     max: 1
 timeout-minutes: 10
+model: gemini-3.5-flash-lite
 ---
 # Issue Triage Assistant
 
