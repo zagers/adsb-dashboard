@@ -1,0 +1,78 @@
+name: Bug report
+description: Report a bug or unexpected behavior
+title: "[Bug]: "
+labels: [triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report. This repo is a
+        lightweight Go dashboard for ADS-B receivers (dump1090-fa). Please be as
+        specific as you can.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What is happening that should not be?
+      placeholder: The aircraft count does not update after...
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: How did you trigger this?
+      placeholder: |
+        1. Start the dashboard with `--addr 192.168.x.x`
+        2. Open http://...
+        3. Observe...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected vs actual behavior
+      description: What did you expect, and what actually happened?
+      placeholder: Expected the frame count to climb; it stays at 0.
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Version / commit
+      description: Which build or commit hash are you running?
+      placeholder: e.g. commit 714d291 or latest main
+    validations:
+      required: true
+
+  - type: dropdown
+    id: hardware
+    attributes:
+      label: Hardware
+      description: What hardware are you running on?
+      options:
+        - Raspberry Pi Zero
+        - Raspberry Pi Zero 2
+        - Raspberry Pi 3
+        - Raspberry Pi 4/5
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: Any journalctl or dashboard output.
+      render: shell
+
+  - type: markdown
+    attributes:
+      value: |
+        If this report involves a **security vulnerability**, do not post details
+        here. Report privately via
+        [GitHub Security Advisories](https://github.com/zagers/adsb-dashboard/security/advisories/new).

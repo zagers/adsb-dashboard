@@ -1,0 +1,40 @@
+name: Feature request
+description: Suggest a new feature or improvement
+title: "[Feature]: "
+labels: [triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting an improvement to the ADS-B dashboard. Please
+        describe the motivation and desired behavior.
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: What problem does this solve?
+      description: Why do you need this? Keep the "why" clear.
+      placeholder: I want to watch the same dashboard from my phone on the LAN.
+    validations:
+      required: true
+
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Desired behavior
+      description: What should the dashboard do once this is implemented?
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Anything you have tried as a workaround?
+
+  - type: markdown
+    attributes:
+      value: |
+        Note: this is a lightweight, zero-dependency Go app targeting the
+        Raspberry Pi Zero. Large dependencies or heavy features may be declined
+        to keep the binary small and resource usage minimal.
