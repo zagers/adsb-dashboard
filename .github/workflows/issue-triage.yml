@@ -59,14 +59,63 @@ jobs:
             core.setOutput('available_labels', labelNames.join(','))
             return labelNames
 
+      - name: Build triage prompt
+        id: build_prompt
+        env:
+          AVAILABLE_LABELS: ${{ steps.get_labels.outputs.available_labels }}
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # ratchet:actions/github-script@v8.0.0
+        with:
+          script: |-
+            const availableLabels = process.env.AVAILABLE_LABELS || '';
+            const issueTitle = context.payload.issue?.title || '';
+            const issueBody = context.payload.issue?.body || '';
+            const commentBody = context.payload.comment?.body || '';
+
+            let issueContext = `Issue Title:\n${issueTitle}\n\nIssue Body:\n${issueBody}`;
+            if (commentBody && !commentBody.startsWith('/triage')) {
+              issueContext += `\n\nLatest Comment:\n${commentBody}`;
+            }
+
+            const prompt = `You are an automated issue triage assistant for the adsb-dashboard repository (a zero-dependency Go web dashboard for ADS-B receivers on Raspberry Pi).
+
+Analyze the following issue and select the most appropriate existing labels from the Available Labels list:
+
+---
+${issueContext}
+---
+
+Available Labels (comma-separated):
+${availableLabels}
+
+Triage Guidelines:
+1. Security (top priority): If the issue plausibly describes a security vulnerability (e.g. remote code execution, crash/panic/memory corruption from parsing stats.json/aircraft.json, authorization/credential bypass), output ONLY: security
+2. Category (choose at most one directly supported label):
+   - bug: Broken behavior, error logs, unexpected zero/frozen values, panics, or functional failures.
+   - enhancement: New feature request or improvement (do not use "feature", use "enhancement").
+   - documentation: Docs, comments, or README updates.
+   - question: Usage inquiries or configuration questions.
+   - needs-info: When essential details (logs, environment, receiver type) are missing to diagnose.
+   - invalid or spam: For spam, gibberish, or test submissions.
+3. Priority (choose at most one, only when justified):
+   - priority/p0: Active security exploit, data loss, or total dashboard crash.
+   - priority/p1: Major regression or blocking defect with no workaround.
+   - priority/p2: Normal actionable defect or enhancement.
+4. Additional:
+   - help wanted or good first issue if suitable for community contributors.
+   - duplicate if explicitly identified as a duplicate.
+
+Output Requirements:
+- Output ONLY a comma-separated list of selected labels from the Available Labels list (maximum 4 labels).
+- Do NOT include markdown formatting, backticks, code blocks, or explanatory text.
+- If no labels apply, output an empty string.`;
+
+            core.setOutput('prompt', prompt);
+
       - name: Run Gemini issue analysis
         id: gemini_analysis
         uses: google-github-actions/run-gemini-cli@f77273f4c914e4bf38440cf36a0369cb64a37489 # ratchet:google-github-actions/run-gemini-cli@v0.1.22
         env:
           GEMINI_CLI_TRUST_WORKSPACE: 'true'
-          AVAILABLE_LABELS: ${{ steps.get_labels.outputs.available_labels }}
-          ISSUE_TITLE: ${{ github.event.issue.title }}
-          ISSUE_BODY: ${{ github.event.issue.body }}
           # Do NOT pass any auth tokens here since this runs on untrusted inputs
           GITHUB_TOKEN: ''
         with:
@@ -77,7 +126,7 @@ jobs:
           settings: |-
             {
               "model": {
-                "maxSessionTurns": 25
+                "maxSessionTurns": 1
               },
               "telemetry": {
                 "enabled": true,
@@ -88,7 +137,7 @@ jobs:
                 "core": []
               }
             }
-          prompt: /gemini-triage
+          prompt: ${{ steps.build_prompt.outputs.prompt }}
 
   label:
     runs-on: ubuntu-latest
@@ -107,27 +156,35 @@ jobs:
             const availableLabels = (process.env.AVAILABLE_LABELS || '')
               .split(',')
               .map((label) => label.trim())
-              .sort()
+              .filter(Boolean);
+
+            // Clean up any markdown code fences, backticks, or quotes that might surround the output
+            const rawOutput = process.env.SELECTED_LABELS || '';
+            const cleaned = rawOutput
+              .replace(/```[a-z]*\n?/gi, '')
+              .replace(/```/g, '')
+              .replace(/["'`]/g, '')
+              .trim();
 
             // Parse the labels as CSV, rejecting anything not in the repo's
             // label set so a prompt-injected payload cannot create arbitrary
             // labels.
-            const selectedLabels = (process.env.SELECTED_LABELS || '')
+            const selectedLabels = cleaned
               .split(',')
               .map((label) => label.trim())
               .filter((label) => availableLabels.includes(label))
               .slice(0, 4)
-              .sort()
+              .sort();
 
-            const issueNumber = process.env.ISSUE_NUMBER
+            const issueNumber = process.env.ISSUE_NUMBER;
             if (selectedLabels && selectedLabels.length > 0) {
-              await github.rest.issues.setLabels({
+              await github.rest.issues.addLabels({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: issueNumber,
                 labels: selectedLabels,
-              })
-              core.info(`Successfully set labels: ${selectedLabels.join(', ')}`)
+              });
+              core.info(`Successfully added labels: ${selectedLabels.join(', ')}`);
             } else {
-              core.info('No valid labels to set for this issue.')
+              core.info(`No valid labels to set for this issue. Raw output was: ${rawOutput}`);
             }
