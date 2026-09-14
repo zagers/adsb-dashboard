@@ -19,3 +19,6 @@ Thumbs.db
 # Go
 *.test
 *.out
+
+# Gemini CLI action artifacts
+.gemini/
