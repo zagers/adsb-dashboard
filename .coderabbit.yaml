@@ -1,0 +1,26 @@
+language: en-US
+
+reviews:
+  profile: assertive
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+  auto_review:
+    enabled: true
+    drafts: false
+
+path_filters:
+  - "!docs/**"
+  - "!**/*.png"
+  - "!JOURNAL.md"
+  - "!GEMINI.md"
+
+review_instructions: |
+  Review this Go codebase with a security and robustness focus:
+  - Zero-dependency Go stdlib application targeting Raspberry Pi Zero (GOARM=6, 32-bit).
+  - stats.json, aircraft.json, and /proc reads are untrusted filesystem inputs; validate bounds and handle malformed input gracefully.
+  - Review SSE/EventSource connection lifecycle for goroutine and buffer leaks.
+  - Flag integer overflow risks on 32-bit ARM, unsafe pointer usage, nil dereferences, and unbounded allocations.
+  - The app serves over SSE with no authentication and is designed localhost-only; flag anything that changes that assumption.
+  - Flag any new external dependencies or non-stdlib imports.

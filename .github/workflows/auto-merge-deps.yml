@@ -22,7 +22,7 @@ jobs:
         uses: lewagon/wait-on-check-action@v1.3.4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
-          check-name: "Analyze"
+          check-name: "Analyze (go)"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 30
 
