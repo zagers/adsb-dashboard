@@ -7,7 +7,7 @@ on:
     types: [created]
 
 concurrency:
-  group: triage-${{ github.event.issue.number }}
+  group: triage-${{ github.event_name == 'issue_comment' && 'manual' || 'auto' }}-${{ github.event.issue.number }}
   cancel-in-progress: true
 
 permissions:
