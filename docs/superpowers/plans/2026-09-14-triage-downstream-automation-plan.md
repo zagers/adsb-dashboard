@@ -156,12 +156,13 @@ if (selectedLabels.includes('security')) {
 
 ## 3. Step-by-Step Execution Checklist
 
-| Step | Feature | Effort | File(s) Affected | Impact |
-|:---:|:---|:---:|:---|:---:|
-| **1** | **Security Auto-Containment** | 15 min | `.github/workflows/issue-triage.yml` | 🔴 Critical Security |
-| **2** | **`needs-info` ADS-B Checklist** | 20 min | `.github/workflows/issue-triage.yml` | 🟡 High Operational |
-| **3** | **Maintainer Triage Card Comment** | 30 min | `.github/workflows/issue-triage.yml` | 🟢 Workflow Efficiency |
-| **4** | **Author-Reply `needs-info` Remover** | 20 min | `.github/workflows/issue-triage.yml` | 🟢 User Experience |
-| **5** | **Priority P0 Notification Webhook** | 25 min | `.github/workflows/issue-triage.yml` | 🟡 Incident Response |
-| **6** | **Question Doc Links / Discussions** | 20 min | `.github/workflows/issue-triage.yml` | 🔵 Backlog Hygiene |
-| **7** | **Autonomous Gemini Issue Fixer** | 2 hours | `.github/workflows/issue-fixer.yml` | 🟣 Full Automation |
+| Step | Feature | Status | Effort | File(s) Affected | Impact |
+|:---:|:---|:---:|:---:|:---|:---:|
+| **1.1** | **Security Auto-Containment** | ✅ Done | 15 min | `.github/workflows/issue-triage.yml` | 🔴 Critical Security |
+| **1.2** | **`needs-info` ADS-B Checklist** | ✅ Done | 20 min | `.github/workflows/issue-triage.yml` | 🟡 High Operational |
+| **1.2b**| **Author-Reply `needs-info` Remover**| ✅ Done | 20 min | `.github/workflows/issue-triage.yml` | 🟢 User Experience |
+| **1.3** | **Maintainer Triage Card Comment** | ✅ Done | 30 min | `.github/workflows/issue-triage.yml` | 🟢 Workflow Efficiency |
+| **2.1** | **Priority P0 Notification Webhook** | ⏳ Pending | 25 min | `.github/workflows/issue-triage.yml` | 🟡 Incident Response |
+| **2.2** | **Question Doc Links / Discussions** | ⏳ Pending | 20 min | `.github/workflows/issue-triage.yml` | 🔵 Backlog Hygiene |
+| **2.3** | **Duplicate Detection & Linking** | ⏳ Pending | 25 min | `.github/workflows/issue-triage.yml` | 🔵 Backlog Hygiene |
+| **3.1** | **Autonomous Gemini Issue Fixer** | ⏳ Pending | 2 hours | `.github/workflows/issue-fixer.yml` | 🟣 Full Automation |
