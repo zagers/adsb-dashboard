@@ -186,6 +186,100 @@ jobs:
                 labels: selectedLabels,
               });
               core.info(`Successfully added labels: ${selectedLabels.join(', ')}`);
+
+              // Step 1.1: Security Report Auto-Containment
+              if (selectedLabels.includes('security')) {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNumber,
+                  body: [
+                    '### 🛡️ Security Report Notification',
+                    '',
+                    'Thank you for reporting this issue. Potential security vulnerabilities are handled privately to protect users.',
+                    '',
+                    'Please submit the full details via our [Private Security Advisory Form](https://github.com/zagers/adsb-dashboard/security/advisories/new) or refer to [SECURITY.md](https://github.com/zagers/adsb-dashboard/blob/main/SECURITY.md).',
+                    '',
+                    'This public issue has been closed and locked to prevent unintended disclosure while under review.'
+                  ].join('\n')
+                });
+                await github.rest.issues.update({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNumber,
+                  state: 'closed',
+                  state_reason: 'not_planned'
+                });
+                await github.rest.issues.lock({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNumber,
+                  lock_reason: 'resolved'
+                });
+                core.info(`Security containment applied to issue #${issueNumber}: closed and locked.`);
+                return;
+              }
+
+              // Step 1.2: ADS-B Diagnostic Checklist (needs-info)
+              if (selectedLabels.includes('needs-info')) {
+                const comments = await github.rest.issues.listComments({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNumber,
+                  per_page: 50
+                });
+                const alreadyPrompted = comments.data.some((c) =>
+                  c.body && c.body.includes('Diagnostic Information Needed')
+                );
+                if (!alreadyPrompted) {
+                  await github.rest.issues.createComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: issueNumber,
+                    body: [
+                      '### ℹ️ Diagnostic Information Needed',
+                      '',
+                      'Thanks for opening this issue! To help investigate and reproduce the problem, please provide the following environment and hardware details:',
+                      '',
+                      '- [ ] **Hardware & OS:** Host architecture (e.g. Raspberry Pi Zero W / Pi 3 / Pi 4), OS version (`uname -a`)',
+                      '- [ ] **Receiver Setup:** SDR model (RTL-SDR v3/v4, FlightAware Pro Stick Plus), antenna & filter details',
+                      '- [ ] **dump1090-fa Status:** Output of `systemctl status dump1090-fa` or `journalctl -u dump1090-fa -n 30`',
+                      '- [ ] **Telemetry Stream:** Is `/run/dump1090-fa/aircraft.json` updating at 1Hz?',
+                      '- [ ] **Console / Logs:** Any terminal output or logs from `adsb-dashboard` service',
+                      '',
+                      'Once you reply with these details, the maintainers can proceed with debugging.'
+                    ].join('\n')
+                  });
+                  core.info(`Posted diagnostic checklist for needs-info on issue #${issueNumber}`);
+                }
+              }
             } else {
               core.info(`No valid labels to set for this issue. Raw output was: ${rawOutput}`);
+            }
+
+  handle_author_reply:
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'issue_comment' &&
+      !contains(github.event.comment.body, '/triage') &&
+      github.event.comment.user.id == github.event.issue.user.id
+    steps:
+      - name: Remove needs-info label if author replied
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # ratchet:actions/github-script@v8.0.0
+        with:
+          script: |-
+            const issueNumber = context.payload.issue.number;
+            const labels = (context.payload.issue.labels || []).map((l) => l.name);
+            if (labels.includes('needs-info')) {
+              try {
+                await github.rest.issues.removeLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNumber,
+                  name: 'needs-info'
+                });
+                core.info(`Removed needs-info label from issue #${issueNumber} after author reply.`);
+              } catch (err) {
+                core.warning(`Failed to remove needs-info label: ${err.message}`);
+              }
             }
