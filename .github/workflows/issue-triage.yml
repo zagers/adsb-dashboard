@@ -159,16 +159,57 @@ jobs:
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # ratchet:actions/github-script@v8.0.0
         with:
           script: |-
-            // Clean up and parse the model output (supports JSON format and CSV fallback)
+            // Clean up and parse the model output (supports structured JSON and CSV fallback)
             const rawOutput = process.env.SELECTED_LABELS || '';
             let parsed = null;
+
+            // 1. Attempt direct parse
             try {
-              const jsonMatch = rawOutput.match(/\{[\s\S]*\}/);
-              if (jsonMatch) {
-                parsed = JSON.parse(jsonMatch[0]);
+              const direct = JSON.parse(rawOutput.trim());
+              if (direct && (direct.labels !== undefined || direct.assessment !== undefined)) {
+                parsed = direct;
               }
-            } catch (e) {
-              core.info('Could not parse JSON from model output, attempting CSV fallback');
+            } catch (e) {}
+
+            // 2. If embedded in thoughts/text, find the JSON object containing "labels"
+            if (!parsed) {
+              const lastLabelsIdx = rawOutput.lastIndexOf('"labels"');
+              if (lastLabelsIdx !== -1) {
+                const startIdx = rawOutput.lastIndexOf('{', lastLabelsIdx);
+                if (startIdx !== -1) {
+                  let depth = 0;
+                  let closingIdx = -1;
+                  for (let i = startIdx; i < rawOutput.length; i++) {
+                    if (rawOutput[i] === '{') depth++;
+                    else if (rawOutput[i] === '}') {
+                      depth--;
+                      if (depth === 0) {
+                        closingIdx = i;
+                        break;
+                      }
+                    }
+                  }
+                  if (closingIdx !== -1) {
+                    try {
+                      parsed = JSON.parse(rawOutput.substring(startIdx, closingIdx + 1));
+                    } catch (e) {}
+                  }
+                }
+              }
+            }
+
+            // 3. Fallback: match any balanced top-level JSON objects from end to start
+            if (!parsed) {
+              const jsonMatches = rawOutput.match(/\{(?:[^{}]|\{[^{}]*\})*\}/g) || [];
+              for (let i = jsonMatches.length - 1; i >= 0; i--) {
+                try {
+                  const candidate = JSON.parse(jsonMatches[i]);
+                  if (candidate && (candidate.labels !== undefined || candidate.assessment !== undefined)) {
+                    parsed = candidate;
+                    break;
+                  }
+                } catch (e) {}
+              }
             }
 
             let candidateLabels = [];
@@ -177,6 +218,7 @@ jobs:
             } else if (parsed && typeof parsed.labels === 'string') {
               candidateLabels = parsed.labels.split(',');
             } else {
+              core.info('Could not parse JSON from model output, attempting CSV fallback');
               const cleaned = rawOutput
                 .replace(/```[a-z]*\n?/gi, '')
                 .replace(/```/g, '')
